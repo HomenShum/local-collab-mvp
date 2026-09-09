@@ -198,7 +198,7 @@ function fallbackAgentName(slot: string): string {
 
 export default function LiveRoom() {
   const rm = useRoom();
-  const params = React.useMemo(() => new URLSearchParams(window.location.search), []);
+  const params = React.useMemo(() => new URLSearchParams(typeof window === "undefined" ? "" : window.location.search), []);
   // joinable via QR deep-link (?room=…) OR an in-app pick (active list / code)
   const [pendingJoin, setPendingJoin] = React.useState<string | null>(null);
   const joinId = params.get("room") ?? pendingJoin;
@@ -238,6 +238,8 @@ function Brand({ tag }: { tag: string }) {
 
 /* ── lobby (create) ────────────────────────────────────────────────── */
 function Lobby({ rm, onJoinRoom }: { rm: ReturnType<typeof useRoom>; onJoinRoom: (id: string) => void }) {
+  const [interactive, setInteractive] = React.useState(false);
+  React.useEffect(() => setInteractive(true), []);
   const [goal, setGoal] = React.useState(DEFAULT_GOAL);
   const [busy, setBusy] = React.useState(false);
   const [isPrivate, setIsPrivate] = React.useState(false);
@@ -268,7 +270,8 @@ function Lobby({ rm, onJoinRoom }: { rm: ReturnType<typeof useRoom>; onJoinRoom:
 
   return (
     <Shell>
-      <div className="flex flex-1 items-center justify-center px-6 py-12">
+      <fieldset disabled={!interactive} className="contents">
+      <main className="flex flex-1 items-center justify-center px-6 py-12">
         <div className="w-full max-w-xl">
           <div className="mb-6 flex justify-center">
             <Brand tag={`${agentCount} agents · one shared room · live voice`} />
@@ -284,8 +287,9 @@ function Lobby({ rm, onJoinRoom }: { rm: ReturnType<typeof useRoom>; onJoinRoom:
             This device becomes <span className="font-semibold text-sky-300">Ada</span>. Add phones or tabs for more agent voices in the same shared room, then jump in by voice anytime.
           </p>
 
-          <label className="mt-6 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Shared goal</label>
+          <label htmlFor="shared-goal" className="mt-6 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Shared goal</label>
           <textarea
+            id="shared-goal"
             value={goal}
             onChange={(e) => setGoal(e.target.value)}
             rows={3}
@@ -394,6 +398,7 @@ function Lobby({ rm, onJoinRoom }: { rm: ReturnType<typeof useRoom>; onJoinRoom:
             <div className="mt-2.5 flex items-center gap-2">
               <input
                 value={joinCode}
+                aria-label="Room code"
                 onChange={(e) => setJoinCode(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") void joinByCode();
@@ -446,7 +451,8 @@ function Lobby({ rm, onJoinRoom }: { rm: ReturnType<typeof useRoom>; onJoinRoom:
             )}
           </div>
         </div>
-      </div>
+      </main>
+      </fieldset>
     </Shell>
   );
 }
